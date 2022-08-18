@@ -11,8 +11,19 @@ def goals():
 
 @auth.route('/login', methods=['GET', 'POST']) # accepting get and post requests
 def login():
-  data = request.form
-  print(data) # immutable multi dict
+  if request.method == 'POST':
+    email = request.form.get('email')
+    password = request.form.get('password')
+
+    user = User.query.filter_by(email=email).first() # each user must have a unique email
+    if user: 
+      if check_password_hash(user.password, password): # if we find a user, check if the password is equal to the hash stored in server
+        flash('logged in successfully.', category='success')
+      else: 
+        flash('incorrect password, try again.', category='error')
+    else: 
+      flash('user does not exist.', category='error')
+
   return render_template("login.html")
 
 @auth.route('/logout')
@@ -27,14 +38,17 @@ def sign_up():
     password1 = request.form.get('password1')
     password2 = request.form.get('password2')
 
-    if len(email) < 4:
-      flash('email must be greater than 3 characters', category='error')
+    user = User.query.filter_by(email=email).first() 
+    if user: 
+      flash('email already exists.', category='error')
+    elif len(email) < 4:
+      flash('email must be greater than 3 characters.', category='error')
     elif len(first_name) < 2: 
-      flash('first name must be greater than 1 character', category='error')
+      flash('first name must be greater than 1 character.', category='error')
     elif password1 != password2: 
-      flash('passwords do not match', category='error')
+      flash('passwords do not match.', category='error')
     elif len(password1) < 7: 
-      flash('password must be at least 7 characters', category='error')
+      flash('password must be at least 7 characters.', category='error')
     else: 
       new_user = User(email=email, first_name=first_name, password=generate_password_hash(password1, method='sha256'))
       flash('account created.', category='success')
